@@ -12,7 +12,7 @@ base_dir = os.path.dirname(os.path.abspath(__file__))
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-c", "--cliente", help="Nome do cliente de onde coletar os dados", required=True)
-parser.add_argument("-s", "--site", help="Site onde está o Equipamento do cliente.", required=True)
+parser.add_argument("-s", "--site", help="Site onde está o Equipamento do cliente.", required=False)
 parser.add_argument("-l", "--listar", help="Ex: Aps, Switchs, Gateways", required=True)
 
 args = parser.parse_args()
@@ -88,6 +88,31 @@ class Gateway:
             serial=data.get('serial'),
             site=data.get('site'),
             status=data.get('status')
+        )
+
+
+class Site:
+    def __init__(self, city, country, latitude, longitude, site_id, site_name, state, zipcode):
+        self.city = city
+        self.country = country
+        self.latitude = latitude
+        self.longitude = longitude
+        self.site_id = site_id
+        self.site_name = site_name
+        self.state = state
+        self.zipcode = zipcode
+
+    @classmethod
+    def from_dict(cls, data):
+        return cls(
+            city=data.get('city'),
+            country=data.get('country'),
+            latitude=data.get('latitude'),
+            longitude=data.get('longitude'),
+            site_id=data.get('site_id'),
+            site_name=data.get('site_name'),
+            state=data.get('state'),
+            zipcode=data.get('zipcode')
         )
 
 
@@ -176,6 +201,20 @@ def list_gateways(client_name, config_parser):
     return json.dumps({"gateways": validated_gateways}, indent=4, ensure_ascii=False)
 
 
+def list_sites(client_name, config_parser):
+    headers = {
+        "Authorization": "Bearer %s" % config_parser[client_name]['access_token'],
+        "Accept": "application/json"
+    }
+
+    company_sites = requests.get(BASE_URL + "/central/v2/sites", headers=headers)
+    sites_data = company_sites.json().get('sites', [])
+
+    validated_sites = [Site.from_dict(site).__dict__ for site in sites_data]
+
+    return json.dumps({"sites": validated_sites}, indent=4, ensure_ascii=False)
+
+
 if __name__ == '__main__':
     """
     Ponto de entrada principal do script.
@@ -223,3 +262,6 @@ if __name__ == '__main__':
     elif args.listar.lower() == "gateways":
         gateways_list = list_gateways(args.cliente, configuration_parser)
         print(gateways_list)
+    elif args.listar.lower() == "sites":
+        sites_list = list_sites(args.cliente, configuration_parser)
+        print(sites_list)
