@@ -9,5 +9,5 @@ After setting your Python environment (Requires Requests) do: `.\.venv\Scripts\p
 ## Logic for Using the Template
 
 1. Create and setup API Tokens on the desired company inside Aruba HPE Cloud Administration.
-2. The first template discovers the sites of a company (Template Aruba - Sites Discovery via API) and creates hosts for each Company + Site.
-3. The second template (Template Aruba - Site Devices Discovery via API) contains the discovery rules for APs, Switches and Gateways for each Company + Site.
+2. The first template discovers the sites of a company (Template Aruba - Tenant Monitoring via API	) and creates hosts for each Company + Site.
+3. The second template (Template Aruba - Tenant Sites Monitoring via API) contains the discovery rules for APs, Switches and Gateways for each Company + Site.

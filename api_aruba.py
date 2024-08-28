@@ -1,10 +1,13 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
+from datetime import datetime, timedelta, timezone
 import os
 import requests
 import configparser
 import json
 import argparse
+import unicodedata
+import re
 
 BASE_URL = "https://apigw-uswest4.central.arubanetworks.com"
 
@@ -92,7 +95,7 @@ class Gateway:
 
 
 class Site:
-    def __init__(self, city, country, latitude, longitude, site_id, site_name, state, zipcode):
+    def __init__(self, city, country, latitude, longitude, site_id, site_name, state, zipcode, company_name, host_name):
         self.city = city
         self.country = country
         self.latitude = latitude
@@ -101,18 +104,65 @@ class Site:
         self.site_name = site_name
         self.state = state
         self.zipcode = zipcode
+        self.company_name = company_name
+        self.host_name = host_name
 
     @classmethod
-    def from_dict(cls, data):
+    def from_dict(cls, data, company_name):
+        site_name = data.get('site_name')
+        host_name = cls.generate_host_name(company_name, site_name)
         return cls(
             city=data.get('city'),
             country=data.get('country'),
             latitude=data.get('latitude'),
             longitude=data.get('longitude'),
             site_id=data.get('site_id'),
-            site_name=data.get('site_name'),
+            site_name=site_name,
             state=data.get('state'),
-            zipcode=data.get('zipcode')
+            zipcode=data.get('zipcode'),
+            company_name=company_name,
+            host_name=host_name
+        )
+
+    @staticmethod
+    def generate_host_name(company_name, site_name):
+        # Normalize and remove accents
+        company_name_clean = unicodedata.normalize('NFKD', company_name).encode('ASCII', 'ignore').decode('ASCII')
+        site_name_clean = unicodedata.normalize('NFKD', site_name).encode('ASCII', 'ignore').decode('ASCII')
+
+        # Convert to lowercase
+        company_name_clean = company_name_clean.lower()
+        site_name_clean = site_name_clean.lower()
+
+        # Replace spaces with underscores and remove non-alphanumeric characters except underscores
+        company_name_clean = re.sub(r'\s+', '_', company_name_clean)
+        site_name_clean = re.sub(r'\s+', '_', site_name_clean)
+        site_name_clean = re.sub(r'[^a-zA-Z0-9_]', '', site_name_clean)
+
+        # Combine company name and site name
+        return f"{company_name_clean}_{site_name_clean}"
+
+
+class Insight:
+    def __init__(self, category, description, impact, insight, insight_id, is_config_recommendation_insight, severity):
+        self.category = category
+        self.description = description
+        self.impact = impact
+        self.insight = insight
+        self.insight_id = insight_id
+        self.is_config_recommendation_insight = is_config_recommendation_insight
+        self.severity = severity
+
+    @classmethod
+    def from_dict(cls, data):
+        return cls(
+            category=data.get('category'),
+            description=data.get('description'),
+            impact=data.get('impact'),
+            insight=data.get('insight'),
+            insight_id=data.get('insight_id'),
+            is_config_recommendation_insight=data.get('is_config_recommendation_insight'),
+            severity=data.get('severity')
         )
 
 
@@ -210,9 +260,39 @@ def list_sites(client_name, config_parser):
     company_sites = requests.get(BASE_URL + "/central/v2/sites", headers=headers)
     sites_data = company_sites.json().get('sites', [])
 
-    validated_sites = [Site.from_dict(site).__dict__ for site in sites_data]
+    validated_sites = [Site.from_dict(site, client_name).__dict__ for site in sites_data]
 
     return json.dumps({"sites": validated_sites}, indent=4, ensure_ascii=False)
+
+
+def get_insights(client_name, config_parser):
+    headers = {
+        "Authorization": f"Bearer {config_parser[client_name]['access_token']}",
+        "Accept": "application/json"
+    }
+
+    # Get the current time and time 3 hours ago in UTC, in milliseconds since the epoch
+    now = datetime.now(timezone.utc)
+    three_hours_ago = now - timedelta(hours=3)
+
+    milliseconds_now = int(now.timestamp() * 1000)
+    milliseconds_three_hours_ago = int(three_hours_ago.timestamp() * 1000)
+
+    params = {
+        "from": milliseconds_three_hours_ago,
+        "to": milliseconds_now
+    }
+
+    # Send the request to get insights
+    response = requests.get(f"{BASE_URL}/aiops/v2/insights/global/list", params=params, headers=headers)
+
+    # Since the API returns a list, parse the JSON directly
+    insights_data = response.json()
+
+    # Map each insight to an instance of the Insight class
+    validated_insights = [Insight.from_dict(insight).__dict__ for insight in insights_data]
+
+    return json.dumps({"insights": validated_insights}, indent=4, ensure_ascii=False)
 
 
 if __name__ == '__main__':
@@ -265,3 +345,6 @@ if __name__ == '__main__':
     elif args.listar.lower() == "sites":
         sites_list = list_sites(args.cliente, configuration_parser)
         print(sites_list)
+    elif args.listar.lower() == "insights":
+        insights_list = get_insights(args.cliente, configuration_parser)
+        print(insights_list)

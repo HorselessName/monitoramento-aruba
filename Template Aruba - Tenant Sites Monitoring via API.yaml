@@ -1,44 +1,98 @@
 zabbix_export:
   version: '6.2'
-  date: '2024-08-16T18:41:46Z'
+  date: '2024-08-28T18:37:41Z'
   template_groups:
     -
-      uuid: c1d5ace5d0be45b6be4175a5021ec284
-      name: TeleSul/MakeOne
+      uuid: 7df96b18c230490a9a0a9e2307226338
+      name: Templates
   templates:
     -
       uuid: 7088f8d3be4e439897ba50e39eaf2079
-      template: 'Template de Discovery do ARUBA'
-      name: 'Template de Discovery do ARUBA'
-      description: 'Template de Monitoramento do ARUBA'
+      template: 'Template Aruba - Tenant Sites Monitoring via API'
+      name: 'Template Aruba - Tenant Sites Monitoring via API'
+      description: 'Discovery Template for finding devices of the mapped site via macro {$SITE_NAME}.'
       groups:
         -
-          name: TeleSul/MakeOne
+          name: Templates
       items:
         -
           uuid: 1797161bf15a4af4896a8872e1ee4f5f
-          name: 'APs de São Paulo'
+          name: 'APs List'
           type: EXTERNAL
-          key: 'api_makeone.py["-c","{$CUSTOMER_NAME}","-s","São Paulo","-l","aps"]'
+          key: 'api_aruba.py["-c","{$CUSTOMER_NAME}","-s","{$SITE_NAME}","-l","aps"]'
           delay: 5m
+          history: 1w
           trends: '0'
           value_type: TEXT
+          description: 'APs Listing of site current of current company.'
+          preprocessing:
+            -
+              type: JAVASCRIPT
+              parameters:
+                - |
+                  var json = JSON.parse(value);
+                  
+                  var data = {
+                      data: json.aps
+                  };
+                  
+                  return JSON.stringify(data);
+          tags:
+            -
+              tag: Discovery
+              value: APs
         -
           uuid: 71c6689df85b4cbb8887bc5e51c975e3
-          name: 'Gateways de São Paulo'
+          name: 'Gateways List'
           type: EXTERNAL
-          key: 'api_makeone.py["-c","{$CUSTOMER_NAME}","-s","São Paulo","-l","gateways"]'
+          key: 'api_aruba.py["-c","{$CUSTOMER_NAME}","-s","{$SITE_NAME}","-l","gateways"]'
           delay: 5m
+          history: 1w
           trends: '0'
           value_type: TEXT
+          description: 'Gateways Listing of current site on current company.'
+          preprocessing:
+            -
+              type: JAVASCRIPT
+              parameters:
+                - |
+                  var json = JSON.parse(value);
+                  
+                  var data = {
+                      data: json.gateways
+                  };
+                  
+                  return JSON.stringify(data);
+          tags:
+            -
+              tag: Discovery
+              value: Gateways
         -
           uuid: 5f8ef50abe0d4ea69fe6663079809e5b
-          name: 'Switches de São Paulo'
+          name: 'Switches List'
           type: EXTERNAL
-          key: 'api_makeone.py["-c","{$CUSTOMER_NAME}","-s","São Paulo","-l","switches"]'
+          key: 'api_aruba.py["-c","{$CUSTOMER_NAME}","-s","{$SITE_NAME}","-l","switches"]'
           delay: 5m
+          history: 1w
           trends: '0'
           value_type: TEXT
+          description: 'Switches Listing of current site on current company.'
+          preprocessing:
+            -
+              type: JAVASCRIPT
+              parameters:
+                - |
+                  var json = JSON.parse(value);
+                  
+                  var data = {
+                      data: json.switches
+                  };
+                  
+                  return JSON.stringify(data);
+          tags:
+            -
+              tag: Discovery
+              value: Switches
       discovery_rules:
         -
           uuid: 148548b300814730bd145b0582a20b14
@@ -63,13 +117,13 @@ zabbix_export:
                 Modelo: {#MODEL}
                 MAC: {#MACADDR}
               master_item:
-                key: 'api_makeone.py["-c","{$CUSTOMER_NAME}","-s","São Paulo","-l","aps"]'
+                key: 'api_aruba.py["-c","{$CUSTOMER_NAME}","-s","{$SITE_NAME}","-l","aps"]'
               tags:
                 -
                   tag: AP
-                  value: '{$CUSTOMER_NAME}'
+                  value: '{#SITE}'
           master_item:
-            key: 'api_makeone.py["-c","{$CUSTOMER_NAME}","-s","São Paulo","-l","aps"]'
+            key: 'api_aruba.py["-c","{$CUSTOMER_NAME}","-s","{$SITE_NAME}","-l","aps"]'
           lld_macro_paths:
             -
               lld_macro: '{#GROUP_NAME}'
@@ -124,13 +178,13 @@ zabbix_export:
                 Serial: {#SERIAL}
                 MAC: {#MACADDR}
               master_item:
-                key: 'api_makeone.py["-c","{$CUSTOMER_NAME}","-s","São Paulo","-l","gateways"]'
+                key: 'api_aruba.py["-c","{$CUSTOMER_NAME}","-s","{$SITE_NAME}","-l","gateways"]'
               tags:
                 -
                   tag: Gateway
-                  value: '{$CUSTOMER_NAME}'
+                  value: '{#SITE}'
           master_item:
-            key: 'api_makeone.py["-c","{$CUSTOMER_NAME}","-s","São Paulo","-l","gateways"]'
+            key: 'api_aruba.py["-c","{$CUSTOMER_NAME}","-s","{$SITE_NAME}","-l","gateways"]'
           lld_macro_paths:
             -
               lld_macro: '{#GROUP_NAME}'
@@ -182,13 +236,13 @@ zabbix_export:
                 IP Publico: {#PUBLIC_IP}
                 MAC: {#MACADDR}
               master_item:
-                key: 'api_makeone.py["-c","{$CUSTOMER_NAME}","-s","São Paulo","-l","switches"]'
+                key: 'api_aruba.py["-c","{$CUSTOMER_NAME}","-s","{$SITE_NAME}","-l","switches"]'
               tags:
                 -
                   tag: Switch
-                  value: '{$CUSTOMER_NAME}'
+                  value: '{#SITE}'
           master_item:
-            key: 'api_makeone.py["-c","{$CUSTOMER_NAME}","-s","São Paulo","-l","switches"]'
+            key: 'api_aruba.py["-c","{$CUSTOMER_NAME}","-s","{$SITE_NAME}","-l","switches"]'
           lld_macro_paths:
             -
               lld_macro: '{#GROUP_NAME}'
@@ -221,7 +275,14 @@ zabbix_export:
                 - '$.data[*]'
               error_handler: CUSTOM_VALUE
               error_handler_params: '[]'
+      tags:
+        -
+          tag: Template
+          value: Aruba
       macros:
         -
           macro: '{$CUSTOMER_NAME}'
-          description: 'Colocar o nome da empresa / cliente'
+          description: 'Company Name (Found on HPE Cloud Panel)'
+        -
+          macro: '{$SITE_NAME}'
+          description: 'Site Name (For listing it''s devices)'
