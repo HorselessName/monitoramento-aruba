@@ -11,3 +11,6 @@ After setting your Python environment (Requires Requests) do: `.\.venv\Scripts\p
 1. Create and setup API Tokens on the desired company inside Aruba HPE Cloud Administration.
 2. The first template discovers the sites of a company (Template Aruba - Tenant Monitoring via API	) and creates hosts for each Company + Site.
 3. The second template (Template Aruba - Tenant Sites Monitoring via API) contains the discovery rules for APs, Switches and Gateways for each Company + Site.
+
+## Zabbix Version
+This was created using Zabbix Version 6.2.9, so if you're on a older or newer version, you must update the YAML Templates before importing.
