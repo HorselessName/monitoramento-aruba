@@ -1,6 +1,6 @@
 zabbix_export:
   version: '6.2'
-  date: '2024-08-28T18:37:41Z'
+  date: '2024-08-30T16:23:07Z'
   template_groups:
     -
       uuid: 7df96b18c230490a9a0a9e2307226338
@@ -20,7 +20,7 @@ zabbix_export:
           name: 'APs List'
           type: EXTERNAL
           key: 'api_aruba.py["-c","{$CUSTOMER_NAME}","-s","{$SITE_NAME}","-l","aps"]'
-          delay: 5m
+          delay: 3m
           history: 1w
           trends: '0'
           value_type: TEXT
@@ -46,7 +46,7 @@ zabbix_export:
           name: 'Gateways List'
           type: EXTERNAL
           key: 'api_aruba.py["-c","{$CUSTOMER_NAME}","-s","{$SITE_NAME}","-l","gateways"]'
-          delay: 5m
+          delay: 3m
           history: 1w
           trends: '0'
           value_type: TEXT
@@ -72,7 +72,7 @@ zabbix_export:
           name: 'Switches List'
           type: EXTERNAL
           key: 'api_aruba.py["-c","{$CUSTOMER_NAME}","-s","{$SITE_NAME}","-l","switches"]'
-          delay: 5m
+          delay: 3m
           history: 1w
           trends: '0'
           value_type: TEXT
@@ -116,12 +116,29 @@ zabbix_export:
                 Serial: {#SERIAL}
                 Modelo: {#MODEL}
                 MAC: {#MACADDR}
+              preprocessing:
+                -
+                  type: JSONPATH
+                  parameters:
+                    - '$.data[?(@.name == ''{#NAME}'')].status'
+                  error_handler: CUSTOM_VALUE
+                  error_handler_params: Down
+                -
+                  type: TRIM
+                  parameters:
+                    - '[""]'
               master_item:
                 key: 'api_aruba.py["-c","{$CUSTOMER_NAME}","-s","{$SITE_NAME}","-l","aps"]'
               tags:
                 -
                   tag: AP
                   value: '{#SITE}'
+              trigger_prototypes:
+                -
+                  uuid: 3c265567c2714a98815b4cf74e70e21d
+                  expression: 'last(/Template Aruba - Tenant Sites Monitoring via API/ap[{#NAME},{#SITE},status])="Down"'
+                  name: '{#NAME} de {$CUSTOMER_NAME} ({#SITE}) Indisponivel'
+                  priority: DISASTER
           master_item:
             key: 'api_aruba.py["-c","{$CUSTOMER_NAME}","-s","{$SITE_NAME}","-l","aps"]'
           lld_macro_paths:
@@ -177,12 +194,29 @@ zabbix_export:
                 
                 Serial: {#SERIAL}
                 MAC: {#MACADDR}
+              preprocessing:
+                -
+                  type: JSONPATH
+                  parameters:
+                    - '$.data[?(@.name == ''{#NAME}'')].status'
+                  error_handler: CUSTOM_VALUE
+                  error_handler_params: Down
+                -
+                  type: TRIM
+                  parameters:
+                    - '[""]'
               master_item:
                 key: 'api_aruba.py["-c","{$CUSTOMER_NAME}","-s","{$SITE_NAME}","-l","gateways"]'
               tags:
                 -
                   tag: Gateway
                   value: '{#SITE}'
+              trigger_prototypes:
+                -
+                  uuid: a21365d3d2464d2f91c4d13eee6892fb
+                  expression: 'last(/Template Aruba - Tenant Sites Monitoring via API/gateway[{#NAME},{#SITE},status])="Down"'
+                  name: '{#NAME} de {$CUSTOMER_NAME} ({#SITE}) Indisponivel'
+                  priority: DISASTER
           master_item:
             key: 'api_aruba.py["-c","{$CUSTOMER_NAME}","-s","{$SITE_NAME}","-l","gateways"]'
           lld_macro_paths:
@@ -235,12 +269,29 @@ zabbix_export:
                 
                 IP Publico: {#PUBLIC_IP}
                 MAC: {#MACADDR}
+              preprocessing:
+                -
+                  type: JSONPATH
+                  parameters:
+                    - '$.data[?(@.name == ''{#NAME}'')].status'
+                  error_handler: CUSTOM_VALUE
+                  error_handler_params: Down
+                -
+                  type: TRIM
+                  parameters:
+                    - '[""]'
               master_item:
                 key: 'api_aruba.py["-c","{$CUSTOMER_NAME}","-s","{$SITE_NAME}","-l","switches"]'
               tags:
                 -
                   tag: Switch
                   value: '{#SITE}'
+              trigger_prototypes:
+                -
+                  uuid: c6fbb29b37354d7e89fd9f7bcbbab934
+                  expression: 'last(/Template Aruba - Tenant Sites Monitoring via API/switch[{#NAME},{#SITE},status])="Down"'
+                  name: '{#NAME} de {$CUSTOMER_NAME} ({#SITE}) Indisponivel'
+                  priority: DISASTER
           master_item:
             key: 'api_aruba.py["-c","{$CUSTOMER_NAME}","-s","{$SITE_NAME}","-l","switches"]'
           lld_macro_paths:

@@ -1,6 +1,6 @@
 zabbix_export:
   version: '6.2'
-  date: '2024-08-28T18:37:10Z'
+  date: '2024-08-30T16:23:33Z'
   template_groups:
     -
       uuid: 7df96b18c230490a9a0a9e2307226338
@@ -86,7 +86,7 @@ zabbix_export:
           description: 'Item Dependente necessário para a Construção dos Protótipos dos Sites do cliente, usado pra gerar os hosts que usam o Template que lista os APs, Switches e Gateways.'
           host_prototypes:
             -
-              uuid: 40b09dc035da49119519fb5a7def27e7
+              uuid: 4182bfe047c14d1395a51c160b5bcf38
               host: 'Aruba_{#HOST_NAME}'
               name: 'Aruba {#CUSTOMER_NAME} - {#SITE_NAME}'
               group_links:
@@ -95,7 +95,7 @@ zabbix_export:
                     name: Aruba
               group_prototypes:
                 -
-                  name: 'Aruba {#CUSTOMER_NAME}'
+                  name: 'Aruba ({#CUSTOMER_NAME})'
               templates:
                 -
                   name: 'Template Aruba - Tenant Sites Monitoring via API'
