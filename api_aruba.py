@@ -156,13 +156,13 @@ class Insight:
     @classmethod
     def from_dict(cls, data):
         return cls(
-            category=data.get('category'),
-            description=data.get('description'),
-            impact=data.get('impact'),
-            insight=data.get('insight'),
-            insight_id=data.get('insight_id'),
-            is_config_recommendation_insight=data.get('is_config_recommendation_insight'),
-            severity=data.get('severity')
+            category=data.get('category', ''),
+            description=data.get('description', ''),
+            impact=data.get('impact', ''),
+            insight=data.get('insight', ''),
+            insight_id=data.get('insight_id', 0),
+            is_config_recommendation_insight=data.get('is_config_recommendation_insight', False),
+            severity=data.get('severity', 'low')
         )
 
 
@@ -265,13 +265,12 @@ def list_sites(client_name, config_parser):
     return json.dumps({"sites": validated_sites}, indent=4, ensure_ascii=False)
 
 
-def get_insights(client_name, config_parser):
+def list_insights(client_name, config_parser):
     headers = {
-        "Authorization": f"Bearer {config_parser[client_name]['access_token']}",
+        "Authorization": "Bearer %s" % config_parser[client_name]['access_token'],
         "Accept": "application/json"
     }
 
-    # Get the current time and time 3 hours ago in UTC, in milliseconds since the epoch
     now = datetime.now(timezone.utc)
     three_hours_ago = now - timedelta(hours=3)
 
@@ -283,14 +282,14 @@ def get_insights(client_name, config_parser):
         "to": milliseconds_now
     }
 
-    # Send the request to get insights
-    response = requests.get(f"{BASE_URL}/aiops/v2/insights/global/list", params=params, headers=headers)
+    response = requests.get("%s/aiops/v2/insights/global/list" % BASE_URL, params=params, headers=headers)
 
-    # Since the API returns a list, parse the JSON directly
-    insights_data = response.json()
+    try:
+        insights_data = response.json()
+    except ValueError:
+        return json.dumps({"error": "Invalid JSON response from server"}, indent=4, ensure_ascii=False)
 
-    # Map each insight to an instance of the Insight class
-    validated_insights = [Insight.from_dict(insight).__dict__ for insight in insights_data]
+    validated_insights = [Insight.from_dict(insight).__dict__ for insight in insights_data if isinstance(insight, dict)]
 
     return json.dumps({"insights": validated_insights}, indent=4, ensure_ascii=False)
 
