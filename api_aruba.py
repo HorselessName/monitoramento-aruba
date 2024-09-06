@@ -345,5 +345,5 @@ if __name__ == '__main__':
         sites_list = list_sites(args.cliente, configuration_parser)
         print(sites_list)
     elif args.listar.lower() == "insights":
-        insights_list = get_insights(args.cliente, configuration_parser)
+        insights_list = list_insights(args.cliente, configuration_parser)
         print(insights_list)
