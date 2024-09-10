@@ -168,8 +168,7 @@ class Insight:
 
 def refresh_token(client_name, config_parser):
     """
-    Refresh the access and refresh tokens using the refresh_token for the given client.
-    The new tokens will be saved back into the configuration parser for future requests.
+    Use this method to refresh the access token using the current refresh token for the organization.
     """
 
     token_refresh_params = {
@@ -179,29 +178,22 @@ def refresh_token(client_name, config_parser):
         "refresh_token": config_parser[client_name]['refresh_token']
     }
 
-    # Make the token refresh request
     refreshed_token_response = requests.post(
         BASE_URL + "/oauth2/token",
         params=token_refresh_params
     )
 
-    # Parse the response
     refreshed_token_data = refreshed_token_response.json()
 
+    # Check if the response contains the tokens
     if 'refresh_token' not in refreshed_token_data or 'access_token' not in refreshed_token_data:
         return {
             "error": "Error: The response does not contain the expected tokens."
         }
 
-    # Update the configuration parser with the new tokens
-    config_parser[client_name]['access_token'] = refreshed_token_data['access_token']
-    config_parser[client_name]['refresh_token'] = refreshed_token_data['refresh_token']
-
-    # Save updated config_parser to your configuration file if needed
-
     return {
-        'access_token': refreshed_token_data['access_token'],
-        'refresh_token': refreshed_token_data['refresh_token']
+        'refresh_token': refreshed_token_data['refresh_token'],
+        'access_token': refreshed_token_data['access_token']
     }
 
 
@@ -295,42 +287,37 @@ def list_insights(client_name, config_parser):
 
 if __name__ == '__main__':
     """
-    Ponto de entrada principal do script.
-
-    Este script atualiza os tokens de acesso a cada execução, e lista os ativos
-    do Token selecionado, presente no arquivo INI, de acordo com a opção de Listagem escolhida.
-
-    Exemplo de uso:
-    python3 script_name.py -c NOME_DO_CLIENTE -s 'São Paulo' -l OPÇÃO_LISTAR
-
-    Argumentos:
-    -c, --cliente: O nome do cliente do qual coletar os dados (obrigatório).
-    -s, --site: Site em que o ativo pertence, dentro da empresa (obrigatório).
-    -l, --listar: Exemplo: Aps, Switchs, Gateways (obrigatório).
+    Main entry point for the script. This script refreshes access tokens on each execution and lists
+    the devices from the selected token present in the INI file, according to the selected listing option.
     """
 
-    current_directory = os.getcwd()
+    base_dir = os.getcwd()
+    config_file_path = os.path.join(base_dir, 'tokens_aruba.ini')
 
     configuration_parser = configparser.ConfigParser()
-    config_file_path = os.path.join(base_dir, 'tokens_aruba.ini')
 
     try:
         configuration_parser.read(config_file_path)
         if args.cliente not in configuration_parser:
-            raise KeyError("Cliente %s não encontrado no arquivo de configuração." % args.cliente)
+            raise KeyError("Client %s not found in the configuration file." % args.cliente)
     except Exception as e:
         raise
 
+    # Refresh the tokens for the specified client
     renewed_tokens = refresh_token(args.cliente, configuration_parser)
 
-    if (renewed_tokens and 'error' not in renewed_tokens and
-            configuration_parser[args.cliente]['refresh_token'] != renewed_tokens['refresh_token']):
-        configuration_parser.set(args.cliente, "refresh_token", renewed_tokens['refresh_token'])
-        configuration_parser.set(args.cliente, "access_token", renewed_tokens['access_token'])
+    if renewed_tokens and 'error' not in renewed_tokens:
+        # Save the new refresh_token and access_token only if they differ from the current ones
+        if configuration_parser[args.cliente]['refresh_token'] != renewed_tokens['refresh_token'] or \
+           configuration_parser[args.cliente]['access_token'] != renewed_tokens['access_token']:
+            configuration_parser.set(args.cliente, "refresh_token", renewed_tokens['refresh_token'])
+            configuration_parser.set(args.cliente, "access_token", renewed_tokens['access_token'])
 
-        with open(config_file_path, 'w') as configfile:
-            configuration_parser.write(configfile)
+            # Write the new tokens to the ini file
+            with open(config_file_path, 'w') as configfile:
+                configuration_parser.write(configfile)
 
+    # Based on the "listar" option, execute the correct function
     if args.listar.lower() == "aps":
         aps_list = list_aps(args.cliente, configuration_parser)
         print(aps_list)
