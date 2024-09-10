@@ -168,11 +168,8 @@ class Insight:
 
 def refresh_token(client_name, config_parser):
     """
-    Use esse método para renovar o Access Token utilizado
-    para a Organização Atual. Caso dê erro, ou esteja desatualizado,
-    precisa atualizar corretamente com o criado para a empresa, no Central Management do ARUBA.
-
-    É criado e mantido em System Apps & Tokens dentro do Customer, em Organization > REST API.
+    Refresh the access and refresh tokens using the refresh_token for the given client.
+    The new tokens will be saved back into the configuration parser for future requests.
     """
 
     token_refresh_params = {
@@ -182,27 +179,29 @@ def refresh_token(client_name, config_parser):
         "refresh_token": config_parser[client_name]['refresh_token']
     }
 
-    authorization_header = {
-        "Authorization": "Bearer %s" % config_parser[client_name]['access_token']
-    }
-
-    refreshed_token_response = requests.request(
-        "POST",
+    # Make the token refresh request
+    refreshed_token_response = requests.post(
         BASE_URL + "/oauth2/token",
-        params=token_refresh_params,
-        headers=authorization_header
+        params=token_refresh_params
     )
 
-    refreshed_token_data = json.loads(refreshed_token_response.text)
+    # Parse the response
+    refreshed_token_data = refreshed_token_response.json()
 
     if 'refresh_token' not in refreshed_token_data or 'access_token' not in refreshed_token_data:
         return {
-            "error": "Erro: A resposta não contém os tokens esperados."
+            "error": "Error: The response does not contain the expected tokens."
         }
 
+    # Update the configuration parser with the new tokens
+    config_parser[client_name]['access_token'] = refreshed_token_data['access_token']
+    config_parser[client_name]['refresh_token'] = refreshed_token_data['refresh_token']
+
+    # Save updated config_parser to your configuration file if needed
+
     return {
-        'refresh_token': refreshed_token_data['refresh_token'],
-        'access_token': refreshed_token_data['access_token']
+        'access_token': refreshed_token_data['access_token'],
+        'refresh_token': refreshed_token_data['refresh_token']
     }
 
 
