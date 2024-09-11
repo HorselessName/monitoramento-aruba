@@ -291,45 +291,50 @@ if __name__ == '__main__':
     the devices from the selected token present in the INI file, according to the selected listing option.
     """
 
-    base_dir = os.getcwd()
+    base_dir = os.path.dirname(__file__)  # Get file directory
     config_file_path = os.path.join(base_dir, 'tokens_aruba.ini')
-
     configuration_parser = configparser.ConfigParser()
+
+    if not os.path.exists(config_file_path):
+        raise FileNotFoundError(f"The configuration file {config_file_path} was not found.")
 
     try:
         configuration_parser.read(config_file_path)
-        if args.cliente not in configuration_parser:
+        normalized_client_name = args.cliente.strip().upper()
+
+        if normalized_client_name not in [section.upper() for section in configuration_parser.sections()]:
             raise KeyError("Client %s not found in the configuration file." % args.cliente)
+
     except Exception as e:
-        raise
+        raise e
 
     # Refresh the tokens for the specified client
-    renewed_tokens = refresh_token(args.cliente, configuration_parser)
+    renewed_tokens = refresh_token(normalized_client_name, configuration_parser)
 
     if renewed_tokens and 'error' not in renewed_tokens:
+
         # Save the new refresh_token and access_token only if they differ from the current ones
-        if configuration_parser[args.cliente]['refresh_token'] != renewed_tokens['refresh_token'] or \
-           configuration_parser[args.cliente]['access_token'] != renewed_tokens['access_token']:
-            configuration_parser.set(args.cliente, "refresh_token", renewed_tokens['refresh_token'])
-            configuration_parser.set(args.cliente, "access_token", renewed_tokens['access_token'])
+        if configuration_parser[normalized_client_name]['refresh_token'] != renewed_tokens['refresh_token'] or \
+                configuration_parser[normalized_client_name]['access_token'] != renewed_tokens['access_token']:
+            configuration_parser.set(normalized_client_name, "refresh_token", renewed_tokens['refresh_token'])
+            configuration_parser.set(normalized_client_name, "access_token", renewed_tokens['access_token'])
 
             # Write the new tokens to the ini file
             with open(config_file_path, 'w') as configfile:
                 configuration_parser.write(configfile)
 
-    # Based on the "listar" option, execute the correct function
     if args.listar.lower() == "aps":
-        aps_list = list_aps(args.cliente, configuration_parser)
+        aps_list = list_aps(normalized_client_name, configuration_parser)
         print(aps_list)
     elif args.listar.lower() == "switches":
-        switches_list = list_switches(args.cliente, configuration_parser)
+        switches_list = list_switches(normalized_client_name, configuration_parser)
         print(switches_list)
     elif args.listar.lower() == "gateways":
-        gateways_list = list_gateways(args.cliente, configuration_parser)
+        gateways_list = list_gateways(normalized_client_name, configuration_parser)
         print(gateways_list)
     elif args.listar.lower() == "sites":
-        sites_list = list_sites(args.cliente, configuration_parser)
+        sites_list = list_sites(normalized_client_name, configuration_parser)
         print(sites_list)
     elif args.listar.lower() == "insights":
-        insights_list = list_insights(args.cliente, configuration_parser)
+        insights_list = list_insights(normalized_client_name, configuration_parser)
         print(insights_list)

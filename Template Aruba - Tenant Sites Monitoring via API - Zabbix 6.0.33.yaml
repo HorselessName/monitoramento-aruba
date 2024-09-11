@@ -1,19 +1,16 @@
 zabbix_export:
-  version: '6.2'
-  date: '2024-08-30T16:23:07Z'
-  template_groups:
-    -
-      uuid: 7df96b18c230490a9a0a9e2307226338
-      name: Templates
+  version: '6.0'
+  date: '2024-09-11T14:04:51Z'
+  groups:
+    - uuid: e1b293e8748c468f81ec2ee3a300828b
+      name: Aruba
   templates:
-    -
-      uuid: 7088f8d3be4e439897ba50e39eaf2079
+    - uuid: 7088f8d3be4e439897ba50e39eaf2079
       template: 'Template Aruba - Tenant Sites Monitoring via API'
       name: 'Template Aruba - Tenant Sites Monitoring via API'
       description: 'Discovery Template for finding devices of the mapped site via macro {$SITE_NAME}.'
       groups:
-        -
-          name: Templates
+        - name: Aruba
       items:
         - uuid: 1797161bf15a4af4896a8872e1ee4f5f
           name: 'APs List'

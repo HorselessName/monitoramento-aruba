@@ -1,17 +1,11 @@
 zabbix_export:
-  version: '6.2'
-  date: '2024-08-30T16:23:33Z'
-  template_groups:
-    -
-      uuid: 7df96b18c230490a9a0a9e2307226338
-      name: Templates
-  host_groups:
-    -
-      uuid: 16a5ae6af92f4bec89cc68a4e3d456a4
+  version: '6.0'
+  date: '2024-09-11T14:05:21Z'
+  groups:
+    - uuid: e1b293e8748c468f81ec2ee3a300828b
       name: Aruba
   templates:
-    -
-      uuid: 3140b327d32842479817deb4cbd9ffef
+    - uuid: 3140b327d32842479817deb4cbd9ffef
       template: 'Template Aruba - Tenant Monitoring via API'
       name: 'Template Aruba - Tenant Monitoring via API'
       description: |
@@ -20,8 +14,7 @@ zabbix_export:
         
         Must have Host Group "Aruba Tenant" created for using it with Grafana.
       groups:
-        -
-          name: Templates
+        - name: Aruba
       items:
         - uuid: e66ac77f71e249c6932544917c0f3fc0
           name: 'Insights Discovery'
