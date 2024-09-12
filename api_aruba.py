@@ -8,6 +8,7 @@ import json
 import argparse
 import unicodedata
 import re
+import fcntl
 
 BASE_URL = "https://apigw-uswest4.central.arubanetworks.com"
 
@@ -170,7 +171,6 @@ def refresh_token(client_name, config_parser):
     """
     Use this method to refresh the access token using the current refresh token for the organization.
     """
-
     token_refresh_params = {
         "client_id": config_parser[client_name]['client_id'],
         "client_secret": config_parser[client_name]['client_secret'],
@@ -195,6 +195,21 @@ def refresh_token(client_name, config_parser):
         'refresh_token': refreshed_token_data['refresh_token'],
         'access_token': refreshed_token_data['access_token']
     }
+
+
+def write_config_with_lock(configuration_parser, config_file_path):
+    """
+    Write the configuration to the file with a file lock to ensure that only one process can write to the file at a time.
+    """
+    with open(config_file_path, 'w') as configfile:
+        # Lock the file for writing
+        fcntl.flock(configfile, fcntl.LOCK_EX)
+
+        # Write the configuration to the file
+        configuration_parser.write(configfile)
+
+        # Unlock the file after writing
+        fcntl.flock(configfile, fcntl.LOCK_UN)
 
 
 def list_aps(client_name, config_parser):
@@ -319,9 +334,8 @@ if __name__ == '__main__':
             configuration_parser.set(normalized_client_name, "refresh_token", renewed_tokens['refresh_token'])
             configuration_parser.set(normalized_client_name, "access_token", renewed_tokens['access_token'])
 
-            # Write the new tokens to the ini file
-            with open(config_file_path, 'w') as configfile:
-                configuration_parser.write(configfile)
+            # Write the new tokens to the ini file with file locking
+            write_config_with_lock(configuration_parser, config_file_path)
 
     if args.listar.lower() == "aps":
         aps_list = list_aps(normalized_client_name, configuration_parser)
