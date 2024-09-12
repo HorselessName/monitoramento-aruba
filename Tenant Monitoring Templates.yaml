@@ -1,10 +1,105 @@
 zabbix_export:
   version: '6.0'
-  date: '2024-09-11T14:04:51Z'
+  date: '2024-09-12T20:16:40Z'
   groups:
     - uuid: e1b293e8748c468f81ec2ee3a300828b
       name: Aruba
   templates:
+    - uuid: 3140b327d32842479817deb4cbd9ffef
+      template: 'Template Aruba - Tenant Monitoring via API'
+      name: 'Template Aruba - Tenant Monitoring via API'
+      description: |
+        1. Generates Hosts for Company + Site using ARUBA API
+        2. Monitors Tenant Insights
+        
+        Must have Host Group "Aruba Tenant" created for using it with Grafana.
+      groups:
+        - name: Aruba
+      items:
+        - uuid: e66ac77f71e249c6932544917c0f3fc0
+          name: 'Insights Discovery'
+          type: EXTERNAL
+          key: 'api_aruba.py["-c","{$CUSTOMER_NAME}","-l","insights"]'
+          delay: 15m
+          history: 1w
+          trends: '0'
+          value_type: TEXT
+          description: 'Returns the list of the insights of the current company (Tenant), to be used for displaying in Grafana.'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - '$.data[*]'
+          tags:
+            - tag: Discovery
+              value: Insights
+            - tag: Insights
+              value: Aruba
+        - uuid: 2aec5b4a837342d8b7ef9290fce028dc
+          name: 'Sites Discovery'
+          type: EXTERNAL
+          key: 'api_aruba.py["-c","{$CUSTOMER_NAME}","-l","sites"]'
+          delay: 1h
+          history: 1w
+          trends: '0'
+          value_type: TEXT
+          description: 'Returns the site list of the current company, to be used for LLD Discovery'
+          tags:
+            - tag: Discovery
+              value: Sites
+            - tag: Sites
+              value: Aruba
+      discovery_rules:
+        - uuid: ac3e4ec3358c41a794d1c770f7e4bb38
+          name: 'Sites Discovery'
+          type: DEPENDENT
+          key: 'discovery_constructor[sites]'
+          delay: '0'
+          description: 'Item Dependente necessário para a Construção dos Protótipos dos Sites do cliente, usado pra gerar os hosts que usam o Template que lista os APs, Switches e Gateways.'
+          host_prototypes:
+            - uuid: 4182bfe047c14d1395a51c160b5bcf38
+              host: 'Aruba_{#HOST_NAME}'
+              name: 'Aruba {#CUSTOMER_NAME} - {#SITE_NAME}'
+              group_links:
+                - group:
+                    name: Aruba
+              group_prototypes:
+                - name: 'Aruba ({#CUSTOMER_NAME})'
+              templates:
+                - name: 'Template Aruba - Tenant Sites Monitoring via API'
+              macros:
+                - macro: '{$CUSTOMER_NAME}'
+                  value: '{#CUSTOMER_NAME}'
+                  description: 'Customer in which devices will be queried'
+                - macro: '{$SITE_NAME}'
+                  value: '{#SITE_NAME}'
+                  description: 'Site for querying APs, Gateways, etc.'
+              tags:
+                - tag: Aruba
+                  value: '{#CUSTOMER_NAME}'
+                - tag: '{#CUSTOMER_NAME}'
+                  value: '{#SITE_NAME}'
+              inventory_mode: AUTOMATIC
+          master_item:
+            key: 'api_aruba.py["-c","{$CUSTOMER_NAME}","-l","sites"]'
+          lld_macro_paths:
+            - lld_macro: '{#CUSTOMER_NAME}'
+              path: $.company_name
+            - lld_macro: '{#HOST_NAME}'
+              path: $.host_name
+            - lld_macro: '{#SITE_NAME}'
+              path: $.site_name
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - '$.data[*]'
+              error_handler: CUSTOM_VALUE
+              error_handler_params: '[]'
+      tags:
+        - tag: Template
+          value: Aruba
+      macros:
+        - macro: '{$CUSTOMER_NAME}'
+          description: 'Company name to discover sites'
     - uuid: 7088f8d3be4e439897ba50e39eaf2079
       template: 'Template Aruba - Tenant Sites Monitoring via API'
       name: 'Template Aruba - Tenant Sites Monitoring via API'
@@ -21,17 +116,6 @@ zabbix_export:
           trends: '0'
           value_type: TEXT
           description: 'APs Listing of site current of current company.'
-          preprocessing:
-            - type: JAVASCRIPT
-              parameters:
-                - |
-                  var json = JSON.parse(value);
-                  
-                  var data = {
-                      data: json.aps
-                  };
-                  
-                  return JSON.stringify(data);
           tags:
             - tag: Discovery
               value: APs
@@ -44,17 +128,6 @@ zabbix_export:
           trends: '0'
           value_type: TEXT
           description: 'Gateways Listing of current site on current company.'
-          preprocessing:
-            - type: JAVASCRIPT
-              parameters:
-                - |
-                  var json = JSON.parse(value);
-                  
-                  var data = {
-                      data: json.gateways
-                  };
-                  
-                  return JSON.stringify(data);
           tags:
             - tag: Discovery
               value: Gateways
@@ -67,17 +140,6 @@ zabbix_export:
           trends: '0'
           value_type: TEXT
           description: 'Switches Listing of current site on current company.'
-          preprocessing:
-            - type: JAVASCRIPT
-              parameters:
-                - |
-                  var json = JSON.parse(value);
-                  
-                  var data = {
-                      data: json.switches
-                  };
-                  
-                  return JSON.stringify(data);
           tags:
             - tag: Discovery
               value: Switches
