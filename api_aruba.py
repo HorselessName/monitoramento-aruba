@@ -8,17 +8,29 @@ import json
 import argparse
 import unicodedata
 import re
-import fcntl
 
+
+# Import appropriate locking mechanism based on OS
+def is_windows():
+    return os.name == 'nt'
+
+
+if is_windows():
+    import win32file
+    import win32con
+else:
+    import fcntl
+
+# Paths
 BASE_URL = "https://apigw-uswest4.central.arubanetworks.com"
+base_dir = os.path.dirname(os.path.abspath(__file__))  # Get file directory
+tokens_folder = os.path.join(base_dir, 'aruba_tokens')  # Folder where token files are located
 
-base_dir = os.path.dirname(os.path.abspath(__file__))
-
+# Handle command-line arguments
 parser = argparse.ArgumentParser()
 parser.add_argument("-c", "--cliente", help="Nome do cliente de onde coletar os dados", required=True)
 parser.add_argument("-s", "--site", help="Site onde está o Equipamento do cliente.", required=False)
 parser.add_argument("-l", "--listar", help="Ex: Aps, Switchs, Gateways", required=True)
-
 args = parser.parse_args()
 
 
@@ -208,35 +220,42 @@ def refresh_token(client_name, config_parser):
     }
 
 
-def write_config_with_lock(parser_for_file, file_path):
-    """
-    Write the configuration to the file with a file lock to ensure that only one process can write to the file at a time.
-    """
-    with open(file_path, 'w') as configfile:
-        # Lock the file for writing
-        fcntl.flock(configfile, fcntl.LOCK_EX)
-
-        # Write the configuration to the file
-        parser_for_file.write(configfile)
-
-        # Unlock the file after writing
-        fcntl.flock(configfile, fcntl.LOCK_UN)
+# Verifica se o sistema operacional é Windows
+def is_windows():
+    return os.name == 'nt'
 
 
+# Importa o fcntl apenas se não for Windows
+if not is_windows():
+    import fcntl
+
+
+# Função de leitura com bloqueio exclusivo (para garantir que apenas um processo leia ou escreva por vez)
 def read_config_with_lock(parser_for_file, file_path):
-    """
-    Read the configuration from the file with a file lock to ensure that only one process can read the file at a time.
-    This also prevents reading while the file is being written.
-    """
-    with open(file_path, 'r') as configfile:
-        # Lock the file for reading
-        fcntl.flock(configfile, fcntl.LOCK_SH)  # Shared lock for reading
+    if is_windows():
+        # No Windows, só lê o arquivo sem bloqueio
+        with open(file_path, 'r') as configfile:
+            parser_for_file.read_file(configfile)
+    else:
+        with open(file_path, 'r') as configfile:
+            # Bloqueio exclusivo para leitura no Linux/Unix (isso vai bloquear outros leitores e escritores)
+            fcntl.flock(configfile, fcntl.LOCK_EX)  # Usar LOCK_EX para leitura exclusiva
+            parser_for_file.read_file(configfile)
+            fcntl.flock(configfile, fcntl.LOCK_UN)  # Libera o bloqueio após leitura
 
-        # Read the configuration
-        parser_for_file.read_file(configfile)
 
-        # Unlock the file after reading
-        fcntl.flock(configfile, fcntl.LOCK_UN)
+# Função de escrita com bloqueio exclusivo (somente no Linux/Unix)
+def write_config_with_lock(parser_for_file, file_path):
+    if is_windows():
+        # No Windows, só escreve o arquivo sem bloqueio
+        with open(file_path, 'w') as configfile:
+            parser_for_file.write(configfile)
+    else:
+        with open(file_path, 'w') as configfile:
+            # Bloqueio exclusivo para escrita no Linux/Unix
+            fcntl.flock(configfile, fcntl.LOCK_EX)
+            parser_for_file.write(configfile)
+            fcntl.flock(configfile, fcntl.LOCK_UN)  # Libera o bloqueio após escrita
 
 
 def list_aps(client_name, config_parser):
@@ -297,7 +316,8 @@ def list_gateways(client_name, config_parser):
         return json.dumps({"data": [{"error": "Invalid JSON response from server"}]}, indent=4)
 
     site = args.site
-    validated_gateways = [Gateway.from_dict(gateway).__dict__ for gateway in gateways_data if gateway.get('site') == site]
+    validated_gateways = [Gateway.from_dict(gateway).__dict__ for gateway in gateways_data if
+                          gateway.get('site') == site]
 
     return json.dumps({"data": validated_gateways}, indent=4, ensure_ascii=False)
 
@@ -307,6 +327,7 @@ def list_sites(client_name, config_parser):
     List sites from the Aruba API and handle any API or data errors.
     Return error messages in a consistent JSON format for Zabbix.
     """
+
     headers = {
         "Authorization": "Bearer %s" % config_parser[client_name]['access_token'],
         "Accept": "application/json"
@@ -365,68 +386,83 @@ def list_insights(client_name, config_parser):
 
 if __name__ == '__main__':
     """
-    Main entry point for the script. This script refreshes access tokens on each execution and lists
-    the devices from the selected token present in the INI file, according to the selected listing option.
+    Ponto de entrada principal do script. Este script atualiza os tokens de acesso
+    a cada execução e lista os dispositivos a partir do token selecionado no arquivo de tokens do cliente.
     """
 
-    base_dir = os.path.dirname(__file__)  # Get file directory
-    config_file_path = os.path.join(base_dir, 'tokens_aruba.ini')
+    # Paths
+    base_dir = os.path.dirname(os.path.abspath(__file__))  # Diretório base
+    tokens_folder = os.path.join(base_dir, 'aruba_tokens')  # Pasta onde os tokens estão localizados
+    config_file_path = os.path.join(tokens_folder, args.cliente)  # Caminho do arquivo de token do cliente específico
     configuration_parser = configparser.ConfigParser()
 
-    if not os.path.exists(config_file_path):
-        print(json.dumps({"data": [{"error": f"Configuration file {config_file_path} not found."}]}))
-        exit(1)
+    normalized_client_name = None  # Initialize it here
 
+    # Error handling using a single block for consistency
     try:
-        # Use read_config_with_lock to safely read the file
+        if not os.path.exists(config_file_path):
+            # Return error in the expected structure instead of raising an exception
+            print(json.dumps({"data": [{"error": f"Arquivo de configuração para o cliente {args.cliente} não encontrado."}]}))
+            exit(1)
+
+        # Usa read_config_with_lock para ler o arquivo com segurança
         read_config_with_lock(configuration_parser, config_file_path)
         normalized_client_name = args.cliente.strip().upper()
 
-        if normalized_client_name not in [section.upper() for section in configuration_parser.sections()]:
-            print(json.dumps({"data": [{"error": f"Client {args.cliente} not found in the configuration file."}]}))
+        if normalized_client_name not in configuration_parser.sections():
+            # Return error in the expected structure instead of raising an exception
+            print(json.dumps({"data": [{"error": f"Cliente {args.cliente} não encontrado em {config_file_path}."}]}))
+            exit(1)
+
+        # Handle different listing options
+        if args.listar.lower() == "aps":
+            aps_list = list_aps(normalized_client_name, configuration_parser)
+            print(aps_list)
+        elif args.listar.lower() == "switches":
+            switches_list = list_switches(normalized_client_name, configuration_parser)
+            print(switches_list)
+        elif args.listar.lower() == "gateways":
+            gateways_list = list_gateways(normalized_client_name, configuration_parser)
+            print(gateways_list)
+        elif args.listar.lower() == "sites":
+            sites_list = list_sites(normalized_client_name, configuration_parser)
+            print(sites_list)
+        elif args.listar.lower() == "insights":
+            insights_list = list_insights(normalized_client_name, configuration_parser)
+            print(insights_list)
+        elif args.listar.lower() == "refresh_token":
+            # Atualiza os tokens para o cliente especificado
+            renewed_tokens = refresh_token(normalized_client_name, configuration_parser)
+
+            # Check for token errors
+            if 'data' in renewed_tokens and 'error' in renewed_tokens['data'][0]:
+                print(json.dumps(renewed_tokens, indent=4))
+                exit(1)
+
+            # Verifica se renewed_tokens não é um erro
+            if renewed_tokens and 'error' not in renewed_tokens:
+                # Extrai os tokens
+                refresh_token = renewed_tokens.get('refresh_token')
+                access_token = renewed_tokens.get('access_token')
+
+                if refresh_token and access_token:
+                    # Salva o novo refresh_token e access_token apenas se forem diferentes dos atuais
+                    if configuration_parser[normalized_client_name]['refresh_token'] != refresh_token or \
+                            configuration_parser[normalized_client_name]['access_token'] != access_token:
+                        # Atualiza a configuração
+                        configuration_parser.set(normalized_client_name, "refresh_token", str(refresh_token))
+                        configuration_parser.set(normalized_client_name, "access_token", str(access_token))
+
+                        # Escreve os novos tokens no arquivo ini com bloqueio (Linux/Unix)
+                        write_config_with_lock(configuration_parser, config_file_path)
+
+                print(json.dumps({"data": [{"message": "Tokens refreshed successfully."}]}))
+                exit(0)
+        else:
+            print(json.dumps({"data": [{"error": f"Opção de listagem {args.listar} inválida."}]}))
             exit(1)
 
     except Exception as e:
-        print(json.dumps({"data": [{"error": str(e)}]}))
+        # Return unexpected errors in the expected structure
+        print(json.dumps({"data": [{"error": f"Unexpected error: {str(e)}"}]}))
         exit(1)
-
-    # Refresh the tokens for the specified client
-    renewed_tokens = refresh_token(normalized_client_name, configuration_parser)
-
-    if 'data' in renewed_tokens and 'error' in renewed_tokens['data'][0]:
-        print(json.dumps(renewed_tokens, indent=4))
-        exit(1)
-
-    # Ensure renewed_tokens is not an error
-    if renewed_tokens and 'error' not in renewed_tokens:
-        # Extract tokens
-        refresh_token = renewed_tokens.get('refresh_token')
-        access_token = renewed_tokens.get('access_token')
-
-        if refresh_token and access_token:
-            # Save the new refresh_token and access_token only if they differ from the current ones
-            if configuration_parser[normalized_client_name]['refresh_token'] != refresh_token or \
-                    configuration_parser[normalized_client_name]['access_token'] != access_token:
-                # Update the configuration
-                configuration_parser.set(normalized_client_name, "refresh_token", str(refresh_token))
-                configuration_parser.set(normalized_client_name, "access_token", str(access_token))
-
-                # Write the new tokens to the ini file with file locking
-                write_config_with_lock(configuration_parser, config_file_path)
-
-    # Handle different listing options
-    if args.listar.lower() == "aps":
-        aps_list = list_aps(normalized_client_name, configuration_parser)
-        print(aps_list)
-    elif args.listar.lower() == "switches":
-        switches_list = list_switches(normalized_client_name, configuration_parser)
-        print(switches_list)
-    elif args.listar.lower() == "gateways":
-        gateways_list = list_gateways(normalized_client_name, configuration_parser)
-        print(gateways_list)
-    elif args.listar.lower() == "sites":
-        sites_list = list_sites(normalized_client_name, configuration_parser)
-        print(sites_list)
-    elif args.listar.lower() == "insights":
-        insights_list = list_insights(normalized_client_name, configuration_parser)
-        print(insights_list)

@@ -1,3 +1,6 @@
 tokens_aruba.ini
 .venv/
 .idea/
+zbx_export_hosts.json
+zbx_filtered_hosts.json
+aruba_tokens/*
