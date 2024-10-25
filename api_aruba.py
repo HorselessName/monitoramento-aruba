@@ -34,6 +34,27 @@ parser.add_argument("-l", "--listar", help="Ex: Aps, Switchs, Gateways", require
 args = parser.parse_args()
 
 
+def normalize_name(name):
+    """
+    Limpa e normaliza o nome, removendo acentos, substituindo espaços por underscores
+    e removendo caracteres não alfanuméricos, exceto underscores.
+    """
+    if name is None:
+        return ''
+
+    # Normalize and remove accents
+    name_clean = unicodedata.normalize('NFKD', name).encode('ASCII', 'ignore').decode('ASCII')
+
+    # Convert to lowercase
+    name_clean = name_clean.lower()
+
+    # Replace spaces with underscores and remove non-alphanumeric characters except underscores
+    name_clean = re.sub(r'\s+', '_', name_clean)
+    name_clean = re.sub(r'[^a-zA-Z0-9_]', '', name_clean)
+
+    return name_clean
+
+
 class AccessPoint:
     def __init__(self, group_name, ip_address, macaddr, model, name, serial, site, status):
         self.group_name = group_name
@@ -47,19 +68,20 @@ class AccessPoint:
 
     @classmethod
     def from_dict(cls, data):
+        # Limpar e normalizar o nome do AP usando a função utilitária
+        clean_name = normalize_name(data.get('name'))
         return cls(
             group_name=data.get('group_name'),
             ip_address=data.get('ip_address'),
             macaddr=data.get('macaddr'),
             model=data.get('model'),
-            name=data.get('name'),
+            name=clean_name,  # Usando o nome limpo
             serial=data.get('serial'),
             site=data.get('site'),
             status=data.get('status')
         )
 
 
-# Define the Switch class
 class Switch:
     def __init__(self, group_name, ip_address, macaddr, name, public_ip_address, site, status):
         self.group_name = group_name
@@ -72,18 +94,19 @@ class Switch:
 
     @classmethod
     def from_dict(cls, data):
+        # Limpar e normalizar o nome do Switch usando a função utilitária
+        clean_name = normalize_name(data.get('name'))
         return cls(
             group_name=data.get('group_name'),
             ip_address=data.get('ip_address'),
             macaddr=data.get('macaddr'),
-            name=data.get('name'),
+            name=clean_name,  # Usando o nome limpo
             public_ip_address=data.get('public_ip_address'),
             site=data.get('site'),
             status=data.get('status'),
         )
 
 
-# Define the Gateway class
 class Gateway:
     def __init__(self, group_name, ip_address, macaddr, name, serial, site, status):
         self.group_name = group_name
@@ -96,11 +119,13 @@ class Gateway:
 
     @classmethod
     def from_dict(cls, data):
+        # Limpar e normalizar o nome do Gateway usando a função utilitária
+        clean_name = normalize_name(data.get('name'))
         return cls(
             group_name=data.get('group_name'),
             ip_address=data.get('ip_address'),
             macaddr=data.get('macaddr'),
-            name=data.get('name'),
+            name=clean_name,  # Usando o nome limpo
             serial=data.get('serial'),
             site=data.get('site'),
             status=data.get('status')
@@ -139,25 +164,23 @@ class Site:
 
     @staticmethod
     def generate_host_name(company_name, site_name):
-        # Normalize and remove accents
-        company_name_clean = unicodedata.normalize('NFKD', company_name).encode('ASCII', 'ignore').decode('ASCII')
-        site_name_clean = unicodedata.normalize('NFKD', site_name).encode('ASCII', 'ignore').decode('ASCII')
-
-        # Convert to lowercase
-        company_name_clean = company_name_clean.lower()
-        site_name_clean = site_name_clean.lower()
-
-        # Replace spaces with underscores and remove non-alphanumeric characters except underscores
-        company_name_clean = re.sub(r'\s+', '_', company_name_clean)
-        site_name_clean = re.sub(r'\s+', '_', site_name_clean)
-        site_name_clean = re.sub(r'[^a-zA-Z0-9_]', '', site_name_clean)
+        # Limpar e normalizar o nome do site e da empresa usando a função utilitária
+        company_name_clean = normalize_name(company_name)
+        site_name_clean = normalize_name(site_name)
 
         # Combine company name and site name
         return f"{company_name_clean}_{site_name_clean}"
 
 
 class Insight:
-    def __init__(self, category, description, impact, insight, insight_id, is_config_recommendation_insight, severity):
+    SEVERITY_ORDER = {
+        'low': 1,
+        'med': 2,
+        'hig': 3
+    }
+
+    def __init__(self, category, description, impact, insight, insight_id, is_config_recommendation_insight, severity,
+                 client):
         self.category = category
         self.description = description
         self.impact = impact
@@ -165,9 +188,10 @@ class Insight:
         self.insight_id = insight_id
         self.is_config_recommendation_insight = is_config_recommendation_insight
         self.severity = severity
+        self.client = client  # Adicionando o campo cliente
 
     @classmethod
-    def from_dict(cls, data):
+    def from_dict(cls, data, client):
         return cls(
             category=data.get('category', ''),
             description=data.get('description', ''),
@@ -175,8 +199,12 @@ class Insight:
             insight=data.get('insight', ''),
             insight_id=data.get('insight_id', 0),
             is_config_recommendation_insight=data.get('is_config_recommendation_insight', False),
-            severity=data.get('severity', 'low')
+            severity=data.get('severity', 'low'),
+            client=client  # Passando o cliente
         )
+
+    def __lt__(self, other):
+        return self.SEVERITY_ORDER[self.severity] < self.SEVERITY_ORDER[other.severity]
 
 
 def refresh_token(client_name, config_parser):
@@ -273,7 +301,7 @@ def list_aps(client_name, config_parser):
     except ValueError:
         return json.dumps({"data": [{"error": "Invalid JSON response from server"}]}, indent=4)
 
-    site = args.site
+    site = args.site  # Pegando o site para filtrar os APs do site específico
     validated_aps = [AccessPoint.from_dict(ap).__dict__ for ap in aps_data if ap.get('site') == site]
 
     return json.dumps({"data": validated_aps}, indent=4, ensure_ascii=False)
@@ -379,8 +407,13 @@ def list_insights(client_name, config_parser):
     except ValueError:
         return json.dumps({"data": [{"error": "Invalid JSON response from server"}]}, indent=4)
 
-    validated_insights = [Insight.from_dict(insight).__dict__ for insight in insights_data if isinstance(insight, dict)]
+    # Filtrando e validando os dados para o JSON final, incluindo o nome do cliente
+    validated_insights = [Insight.from_dict(insight, client_name).__dict__ for insight in insights_data if isinstance(insight, dict)]
 
+    # Ordenando os insights pela severidade
+    validated_insights.sort(key=lambda i: Insight.SEVERITY_ORDER[i['severity']])
+
+    # Retornando o JSON final filtrado e ordenado
     return json.dumps({"data": validated_insights}, indent=4, ensure_ascii=False)
 
 
@@ -388,6 +421,10 @@ if __name__ == '__main__':
     """
     Ponto de entrada principal do script. Este script atualiza os tokens de acesso
     a cada execução e lista os dispositivos a partir do token selecionado no arquivo de tokens do cliente.
+    
+    Exemplos de uso:
+     ./api_aruba.py -c "<Cliente>" -l "aps" -s "<Site do Tenant>"
+     ./api_aruba.py -c "<Cliente>" -l "insights"
     """
 
     # Paths
@@ -414,7 +451,32 @@ if __name__ == '__main__':
             print(json.dumps({"data": [{"error": f"Cliente {args.cliente} não encontrado em {config_file_path}."}]}))
             exit(1)
 
-        # Handle different listing options
+        # Atualiza os tokens para o cliente especificado
+        renewed_tokens = refresh_token(normalized_client_name, configuration_parser)
+
+        # Check for token errors
+        if 'data' in renewed_tokens and 'error' in renewed_tokens['data'][0]:
+            print(json.dumps(renewed_tokens, indent=4))
+            exit(1)
+
+        # Verifica se renewed_tokens não é um erro
+        if renewed_tokens and 'error' not in renewed_tokens:
+            # Extrai os tokens
+            refresh_token = renewed_tokens.get('refresh_token')
+            access_token = renewed_tokens.get('access_token')
+
+            if refresh_token and access_token:
+                # Salva o novo refresh_token e access_token apenas se forem diferentes dos atuais
+                if configuration_parser[normalized_client_name]['refresh_token'] != refresh_token or \
+                        configuration_parser[normalized_client_name]['access_token'] != access_token:
+                    # Atualiza a configuração
+                    configuration_parser.set(normalized_client_name, "refresh_token", str(refresh_token))
+                    configuration_parser.set(normalized_client_name, "access_token", str(access_token))
+
+                    # Escreve os novos tokens no arquivo ini com bloqueio (Linux/Unix)
+                    write_config_with_lock(configuration_parser, config_file_path)
+
+        # Manipula as opções de listagem
         if args.listar.lower() == "aps":
             aps_list = list_aps(normalized_client_name, configuration_parser)
             print(aps_list)
@@ -430,37 +492,6 @@ if __name__ == '__main__':
         elif args.listar.lower() == "insights":
             insights_list = list_insights(normalized_client_name, configuration_parser)
             print(insights_list)
-        elif args.listar.lower() == "refresh_token":
-            # Atualiza os tokens para o cliente especificado
-            renewed_tokens = refresh_token(normalized_client_name, configuration_parser)
-
-            # Check for token errors
-            if 'data' in renewed_tokens and 'error' in renewed_tokens['data'][0]:
-                print(json.dumps(renewed_tokens, indent=4))
-                exit(1)
-
-            # Verifica se renewed_tokens não é um erro
-            if renewed_tokens and 'error' not in renewed_tokens:
-                # Extrai os tokens
-                refresh_token = renewed_tokens.get('refresh_token')
-                access_token = renewed_tokens.get('access_token')
-
-                if refresh_token and access_token:
-                    # Salva o novo refresh_token e access_token apenas se forem diferentes dos atuais
-                    if configuration_parser[normalized_client_name]['refresh_token'] != refresh_token or \
-                            configuration_parser[normalized_client_name]['access_token'] != access_token:
-                        # Atualiza a configuração
-                        configuration_parser.set(normalized_client_name, "refresh_token", str(refresh_token))
-                        configuration_parser.set(normalized_client_name, "access_token", str(access_token))
-
-                        # Escreve os novos tokens no arquivo ini com bloqueio (Linux/Unix)
-                        write_config_with_lock(configuration_parser, config_file_path)
-
-                print(json.dumps({"data": [{"message": "Tokens refreshed successfully."}]}))
-                exit(0)
-        else:
-            print(json.dumps({"data": [{"error": f"Opção de listagem {args.listar} inválida."}]}))
-            exit(1)
 
     except Exception as e:
         # Return unexpected errors in the expected structure
