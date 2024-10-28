@@ -145,9 +145,7 @@
             "hostsInMaintenance": false,
             "limit": 1001,
             "minSeverity": 0,
-            "severities": [
-              0
-            ],
+            "severities": [],
             "showDisabledItems": false,
             "skipEmptyValues": false,
             "sortProblems": "default",
@@ -227,14 +225,6 @@
         "problemTimeline": true,
         "resizedColumns": [
           {
-            "id": "host",
-            "value": 147.46182250976562
-          },
-          {
-            "id": "groups",
-            "value": 162.4757080078125
-          },
-          {
             "id": "age",
             "value": 103.97222900390625
           },
@@ -247,8 +237,16 @@
             "value": 11
           },
           {
+            "id": "host",
+            "value": 265.4479217529297
+          },
+          {
+            "id": "groups",
+            "value": 243.4652862548828
+          },
+          {
             "id": "name",
-            "value": 284.859375
+            "value": 382.84375
           }
         ],
         "severityField": true,
@@ -729,6 +727,6 @@
   "timezone": "",
   "title": "Dashboard de Overview do ARUBA",
   "uid": "dds0qq4isp9fkc",
-  "version": 23,
+  "version": 25,
   "weekStart": ""
 }
