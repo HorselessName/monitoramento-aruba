@@ -690,7 +690,7 @@
     "list": [
       {
         "current": {
-          "selected": true,
+          "selected": false,
           "text": "All",
           "value": "$__all"
         },
