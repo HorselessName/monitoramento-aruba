@@ -1,4 +1,53 @@
 {
+  "__inputs": [
+    {
+      "name": "DS_ZABBIX",
+      "label": "Zabbix",
+      "description": "",
+      "type": "datasource",
+      "pluginId": "alexanderzobnin-zabbix-datasource",
+      "pluginName": "Zabbix"
+    }
+  ],
+  "__elements": {},
+  "__requires": [
+    {
+      "type": "datasource",
+      "id": "alexanderzobnin-zabbix-datasource",
+      "name": "Zabbix",
+      "version": "1.0.0"
+    },
+    {
+      "type": "panel",
+      "id": "alexanderzobnin-zabbix-triggers-panel",
+      "name": "Zabbix Problems",
+      "version": ""
+    },
+    {
+      "type": "grafana",
+      "id": "grafana",
+      "name": "Grafana",
+      "version": "9.1.6"
+    },
+    {
+      "type": "panel",
+      "id": "stat",
+      "name": "Stat",
+      "version": ""
+    },
+    {
+      "type": "panel",
+      "id": "table",
+      "name": "Table",
+      "version": ""
+    },
+    {
+      "type": "panel",
+      "id": "text",
+      "name": "Text",
+      "version": ""
+    }
+  ],
   "annotations": {
     "list": [
       {
@@ -24,7 +73,7 @@
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
-  "id": 111,
+  "id": null,
   "links": [],
   "liveNow": false,
   "panels": [
@@ -49,14 +98,14 @@
         "content": "<table style=\"border-collapse: collapse; width: 100%; height: 70px; background: linear-gradient(90deg, #000000, #800080); border-radius: 15px;\" border=\"0\">\n<tbody>\n<tr style=\"height: 100%; vertical-align: middle;\">\n<td style=\"width: 85%; text-align: center; vertical-align: middle;\">\n<h2 style=\"margin: 0; padding: 0; font-size: 24px;\">\n<span style=\"color: #ffffff;\">MONITORAMENTO </span>\n<span style=\"color: #ff8300;\">ARUBA</span>\n</h2>\n</td>\n<td style=\"width: 15%; text-align: right; vertical-align: middle; padding-right: 10px;\">\n<img src=\"https://devhub.arubanetworks.com/HPE_orange_logo.png\" height=\"40px\" alt=\"Aruba Logo\" />\n</td>\n</tr>\n</tbody>\n</table>\n",
         "mode": "html"
       },
-      "pluginVersion": "11.1.0",
+      "pluginVersion": "9.1.6",
       "transparent": true,
       "type": "text"
     },
     {
       "datasource": {
         "type": "alexanderzobnin-zabbix-datasource",
-        "uid": "QLgnkXS4z"
+        "uid": "${DS_ZABBIX}"
       },
       "fieldConfig": {
         "defaults": {
@@ -84,7 +133,7 @@
       },
       "gridPos": {
         "h": 3,
-        "w": 24,
+        "w": 2.1818181818181817,
         "x": 0,
         "y": 3
       },
@@ -107,7 +156,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "11.1.0",
+      "pluginVersion": "9.1.6",
       "repeat": "Tenants",
       "repeatDirection": "h",
       "targets": [
@@ -118,7 +167,7 @@
           "countTriggersBy": "",
           "datasource": {
             "type": "alexanderzobnin-zabbix-datasource",
-            "uid": "QLgnkXS4z"
+            "uid": "${DS_ZABBIX}"
           },
           "evaltype": "0",
           "functions": [],
@@ -188,18 +237,36 @@
       "type": "stat"
     },
     {
+      "ackEventColor": "rgb(56, 219, 156)",
+      "ackField": true,
+      "ageField": false,
+      "customLastChangeFormat": false,
       "datasource": {
         "type": "alexanderzobnin-zabbix-datasource",
-        "uid": "QLgnkXS4z"
+        "uid": "${DS_ZABBIX}"
       },
       "description": "",
+      "descriptionAtNewLine": false,
+      "descriptionField": true,
+      "fontSize": "100%",
       "gridPos": {
-        "h": 8,
+        "h": 17,
         "w": 24,
         "x": 0,
         "y": 6
       },
+      "highlightBackground": false,
+      "highlightNewEvents": false,
+      "highlightNewerThan": "1h",
+      "hostField": true,
+      "hostGroups": false,
+      "hostProxy": false,
+      "hostTechNameField": false,
       "id": 18,
+      "lastChangeFormat": "",
+      "layout": "table",
+      "markAckEvents": false,
+      "okEventColor": "rgb(56, 189, 113)",
       "options": {
         "ackEventColor": "rgb(56, 219, 156)",
         "ackField": false,
@@ -293,18 +360,30 @@
           }
         ]
       },
+      "pageSize": 50,
       "pluginVersion": "4.5.2",
+      "problemTimeline": true,
+      "resizedColumns": [
+        {
+          "id": "host",
+          "value": 397.2167053222656
+        }
+      ],
+      "schemaVersion": 8,
+      "severityField": true,
+      "showTags": true,
+      "sortProblems": "lastchange",
+      "statusField": true,
+      "statusIcon": false,
       "targets": [
         {
           "application": {
             "filter": ""
           },
-          "countTriggersBy": "",
           "datasource": {
             "type": "alexanderzobnin-zabbix-datasource",
-            "uid": "QLgnkXS4z"
+            "uid": "${DS_ZABBIX}"
           },
-          "evaltype": "0",
           "functions": [],
           "group": {
             "filter": "/Aruba \\($Tenants\\)/"
@@ -318,23 +397,16 @@
           "itemTag": {
             "filter": ""
           },
-          "macro": {
-            "filter": ""
-          },
           "options": {
             "acknowledged": 2,
-            "count": false,
             "disableDataAlignment": false,
             "hostProxy": false,
             "hostsInMaintenance": false,
             "limit": 1001,
             "minSeverity": 0,
-            "severities": [],
             "showDisabledItems": false,
             "skipEmptyValues": false,
             "sortProblems": "default",
-            "useTimeRange": false,
-            "useTrends": "default",
             "useZabbixValueMapping": false
           },
           "proxy": {
@@ -343,7 +415,6 @@
           "queryType": "5",
           "refId": "A",
           "resultFormat": "time_series",
-          "schema": 12,
           "showProblems": "problems",
           "table": {
             "skipEmptyValues": false
@@ -351,19 +422,67 @@
           "tags": {
             "filter": ""
           },
-          "textFilter": "",
           "trigger": {
             "filter": ""
+          },
+          "triggers": {
+            "acknowledged": 2,
+            "count": true,
+            "minSeverity": 3
           }
         }
       ],
       "title": "Incidentes",
+      "triggerSeverity": [
+        {
+          "$$hashKey": "object:51",
+          "color": "rgb(108, 108, 108)",
+          "priority": 0,
+          "severity": "Not classified",
+          "show": true
+        },
+        {
+          "$$hashKey": "object:52",
+          "color": "rgb(120, 158, 183)",
+          "priority": 1,
+          "severity": "Information",
+          "show": true
+        },
+        {
+          "$$hashKey": "object:53",
+          "color": "rgb(175, 180, 36)",
+          "priority": 2,
+          "severity": "Warning",
+          "show": true
+        },
+        {
+          "$$hashKey": "object:54",
+          "color": "rgb(255, 137, 30)",
+          "priority": 3,
+          "severity": "Average",
+          "show": true
+        },
+        {
+          "$$hashKey": "object:55",
+          "color": "rgb(255, 101, 72)",
+          "priority": 4,
+          "severity": "High",
+          "show": true
+        },
+        {
+          "$$hashKey": "object:56",
+          "color": "rgb(215, 0, 0)",
+          "priority": 5,
+          "severity": "Disaster",
+          "show": true
+        }
+      ],
       "type": "alexanderzobnin-zabbix-triggers-panel"
     },
     {
       "datasource": {
         "type": "alexanderzobnin-zabbix-datasource",
-        "uid": "QLgnkXS4z"
+        "uid": "${DS_ZABBIX}"
       },
       "description": "",
       "fieldConfig": {
@@ -373,10 +492,7 @@
           },
           "custom": {
             "align": "auto",
-            "cellOptions": {
-              "type": "auto",
-              "wrapText": false
-            },
+            "displayMode": "auto",
             "filterable": true,
             "inspect": false
           },
@@ -508,7 +624,7 @@
             "properties": [
               {
                 "id": "custom.width",
-                "value": 333
+                "value": 526
               }
             ]
           },
@@ -520,17 +636,17 @@
             "properties": [
               {
                 "id": "custom.width",
-                "value": 348
+                "value": 479
               }
             ]
           }
         ]
       },
       "gridPos": {
-        "h": 8,
+        "h": 12,
         "w": 24,
         "x": 0,
-        "y": 14
+        "y": 23
       },
       "id": 30,
       "options": {
@@ -545,9 +661,14 @@
           "show": false
         },
         "showHeader": true,
-        "sortBy": []
+        "sortBy": [
+          {
+            "desc": true,
+            "displayName": "Severity"
+          }
+        ]
       },
-      "pluginVersion": "11.1.0",
+      "pluginVersion": "9.1.6",
       "targets": [
         {
           "application": {
@@ -556,7 +677,7 @@
           "countTriggersBy": "",
           "datasource": {
             "type": "alexanderzobnin-zabbix-datasource",
-            "uid": "QLgnkXS4z"
+            "uid": "${DS_ZABBIX}"
           },
           "evaltype": "0",
           "functions": [],
@@ -682,19 +803,16 @@
     }
   ],
   "refresh": "30s",
-  "schemaVersion": 39,
+  "schemaVersion": 37,
+  "style": "dark",
   "tags": [],
   "templating": {
     "list": [
       {
-        "current": {
-          "selected": false,
-          "text": "All",
-          "value": "$__all"
-        },
+        "current": {},
         "datasource": {
           "type": "alexanderzobnin-zabbix-datasource",
-          "uid": "QLgnkXS4z"
+          "uid": "${DS_ZABBIX}"
         },
         "definition": "Zabbix - group",
         "description": "Uses a RegEx to remove \"Aruba\" and the parenthesis, leaving only the name of the Tenant Client.",
@@ -726,7 +844,7 @@
   "timepicker": {},
   "timezone": "",
   "title": "Dashboard de Overview do ARUBA",
-  "uid": "dds0qq4isp9fkc",
-  "version": 25,
+  "uid": "tgfjhgk4isp9fkc",
+  "version": 6,
   "weekStart": ""
 }

@@ -1,6 +1,6 @@
 zabbix_export:
   version: '6.0'
-  date: '2024-10-25T14:06:23Z'
+  date: '2024-10-29T20:19:11Z'
   groups:
     - uuid: e1b293e8748c468f81ec2ee3a300828b
       name: Aruba
@@ -39,7 +39,6 @@ zabbix_export:
                   
                   // If there's no error, return the input value (you can adjust this as needed)
                   return value;
-                  
             - type: DISCARD_UNCHANGED_HEARTBEAT
               parameters:
                 - 1h
@@ -73,7 +72,6 @@ zabbix_export:
                   
                   // If there's no error, return the input value (you can adjust this as needed)
                   return value;
-                  
             - type: DISCARD_UNCHANGED_HEARTBEAT
               parameters:
                 - 1h
@@ -107,7 +105,6 @@ zabbix_export:
                   
                   // If there's no error, return the input value (you can adjust this as needed)
                   return value;
-                  
             - type: DISCARD_UNCHANGED_HEARTBEAT
               parameters:
                 - 1h
