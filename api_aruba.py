@@ -292,8 +292,10 @@ def list_aps(client_name, config_parser):
         "Accept": "application/json"
     }
 
+    site = args.site  # Pegando o site para filtrar os APs do site específico
+
     try:
-        response = requests.get(BASE_URL + "/monitoring/v2/aps", headers=headers)
+        response = requests.get(BASE_URL + "/monitoring/v2/aps", headers=headers, params={"site": site, "limit": 1000})
         response.raise_for_status()  # Raise an exception for HTTP errors
         aps_data = response.json().get('aps', [])
     except requests.exceptions.RequestException as e:
@@ -301,7 +303,6 @@ def list_aps(client_name, config_parser):
     except ValueError:
         return json.dumps({"data": [{"error": "Invalid JSON response from server"}]}, indent=4)
 
-    site = args.site  # Pegando o site para filtrar os APs do site específico
     validated_aps = [AccessPoint.from_dict(ap).__dict__ for ap in aps_data if ap.get('site') == site]
 
     return json.dumps({"data": validated_aps}, indent=4, ensure_ascii=False)
@@ -313,8 +314,11 @@ def list_switches(client_name, config_parser):
         "Accept": "application/json"
     }
 
+    site = args.site  # Pegando o site para filtrar os APs do site específico
+
     try:
-        response = requests.get(BASE_URL + "/monitoring/v1/switches", headers=headers)
+        response = requests.get(BASE_URL + "/monitoring/v1/switches", headers=headers,
+                                params={"site": site, "limit": 1000})
         response.raise_for_status()  # Raise an exception for HTTP errors
         switches_data = response.json().get('switches', [])
     except requests.exceptions.RequestException as e:
@@ -322,7 +326,6 @@ def list_switches(client_name, config_parser):
     except ValueError:
         return json.dumps({"data": [{"error": "Invalid JSON response from server"}]}, indent=4)
 
-    site = args.site
     validated_switches = [Switch.from_dict(switch).__dict__ for switch in switches_data if switch.get('site') == site]
 
     return json.dumps({"data": validated_switches}, indent=4, ensure_ascii=False)
@@ -334,8 +337,11 @@ def list_gateways(client_name, config_parser):
         "Accept": "application/json"
     }
 
+    site = args.site  # Pegando o site para filtrar os APs do site específico
+
     try:
-        response = requests.get(BASE_URL + "/monitoring/v1/gateways", headers=headers)
+        response = requests.get(BASE_URL + "/monitoring/v1/gateways", headers=headers,
+                                params={"site": site, "limit": 1000})
         response.raise_for_status()  # Raise an exception for HTTP errors
         gateways_data = response.json().get('gateways', [])
     except requests.exceptions.RequestException as e:
@@ -408,7 +414,8 @@ def list_insights(client_name, config_parser):
         return json.dumps({"data": [{"error": "Invalid JSON response from server"}]}, indent=4)
 
     # Filtrando e validando os dados para o JSON final, incluindo o nome do cliente
-    validated_insights = [Insight.from_dict(insight, client_name).__dict__ for insight in insights_data if isinstance(insight, dict)]
+    validated_insights = [Insight.from_dict(insight, client_name).__dict__ for insight in insights_data if
+                          isinstance(insight, dict)]
 
     # Ordenando os insights pela severidade
     validated_insights.sort(key=lambda i: Insight.SEVERITY_ORDER[i['severity']])
@@ -439,7 +446,8 @@ if __name__ == '__main__':
     try:
         if not os.path.exists(config_file_path):
             # Return error in the expected structure instead of raising an exception
-            print(json.dumps({"data": [{"error": f"Arquivo de configuração para o cliente {args.cliente} não encontrado."}]}))
+            print(json.dumps(
+                {"data": [{"error": f"Arquivo de configuração para o cliente {args.cliente} não encontrado."}]}))
             exit(1)
 
         # Usa read_config_with_lock para ler o arquivo com segurança
