@@ -176,7 +176,7 @@ class Insight:
     SEVERITY_ORDER = {
         'low': 1,
         'med': 2,
-        'hig': 3
+        'high': 3
     }
 
     def __init__(self, category, description, impact, insight, insight_id, is_config_recommendation_insight, severity,
@@ -406,21 +406,30 @@ def list_insights(client_name, config_parser):
 
     try:
         response = requests.get("%s/aiops/v2/insights/global/list" % BASE_URL, params=params, headers=headers)
-        response.raise_for_status()  # Raise an exception for HTTP errors
+        response.raise_for_status()
         insights_data = response.json()
-    except requests.exceptions.RequestException as e:
-        return json.dumps({"data": [{"error": str(e)}]}, indent=4)
+    except requests.exceptions.RequestException as error_response:
+        return json.dumps({"data": [{"error": str(error_response)}]}, indent=4)
     except ValueError:
         return json.dumps({"data": [{"error": "Invalid JSON response from server"}]}, indent=4)
 
-    # Filtrando e validando os dados para o JSON final, incluindo o nome do cliente
-    validated_insights = [Insight.from_dict(insight, client_name).__dict__ for insight in insights_data if
-                          isinstance(insight, dict)]
+    validated_insights = []
 
-    # Ordenando os insights pela severidade
-    validated_insights.sort(key=lambda i: Insight.SEVERITY_ORDER[i['severity']])
+    for insight in insights_data:
+        if isinstance(insight, dict):
+            try:
+                validated_insight = Insight.from_dict(insight, client_name).__dict__
+                validated_insights.append(validated_insight)
+            except (KeyError, TypeError, ValueError) as e:
+                # Ignorar insights malformados
+                pass
 
-    # Retornando o JSON final filtrado e ordenado
+    def severity_sort_key(insight_severity):
+        # Retorna a ordem da severidade ou um número alto para desconhecidos
+        return Insight.SEVERITY_ORDER.get(insight_severity['severity'], float('inf'))
+
+    validated_insights.sort(key=severity_sort_key)
+
     return json.dumps({"data": validated_insights}, indent=4, ensure_ascii=False)
 
 
