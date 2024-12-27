@@ -438,16 +438,13 @@
       "description": "",
       "fieldConfig": {
         "defaults": {
-          "color": {
-            "mode": "thresholds"
-          },
           "custom": {
             "align": "auto",
             "displayMode": "auto",
-            "filterable": true,
             "inspect": false
           },
           "mappings": [],
+          "noValue": "Tudo certo :) Nenhum Insight",
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -462,120 +459,34 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "Field"
+              "options": "Severidade"
             },
             "properties": [
               {
-                "id": "custom.hidden",
-                "value": true
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "item"
-            },
-            "properties": [
+                "id": "mappings",
+                "value": [
+                  {
+                    "options": {
+                      "high": {
+                        "color": "super-light-red",
+                        "index": 2
+                      },
+                      "low": {
+                        "color": "super-light-blue",
+                        "index": 0
+                      },
+                      "med": {
+                        "color": "super-light-yellow",
+                        "index": 1
+                      }
+                    },
+                    "type": "value"
+                  }
+                ]
+              },
               {
-                "id": "custom.hidden",
-                "value": true
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "item_key"
-            },
-            "properties": [
-              {
-                "id": "custom.hidden",
-                "value": true
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "host"
-            },
-            "properties": [
-              {
-                "id": "displayName",
-                "value": "Cliente"
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "Cliente"
-            },
-            "properties": [
-              {
-                "id": "custom.width",
-                "value": 165
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "insight_id"
-            },
-            "properties": [
-              {
-                "id": "custom.width",
-                "value": 87
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "impact"
-            },
-            "properties": [
-              {
-                "id": "custom.width",
-                "value": 340
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "Description"
-            },
-            "properties": [
-              {
-                "id": "custom.width",
-                "value": 148
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "Category"
-            },
-            "properties": [
-              {
-                "id": "custom.width",
-                "value": 206
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "Impact"
-            },
-            "properties": [
-              {
-                "id": "custom.width",
-                "value": 526
+                "id": "custom.displayMode",
+                "value": "color-background"
               }
             ]
           },
@@ -587,24 +498,58 @@
             "properties": [
               {
                 "id": "custom.width",
-                "value": 479
+                "value": 634
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Categoria"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 186
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Impacto"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 606
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Detalhes"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 751
               }
             ]
           }
         ]
       },
       "gridPos": {
-        "h": 12,
+        "h": 8,
         "w": 24,
         "x": 0,
         "y": 23
       },
       "id": 30,
+      "maxPerRow": 2,
       "options": {
-        "cellHeight": "sm",
         "footer": {
-          "countRows": false,
-          "enablePagination": false,
           "fields": "",
           "reducer": [
             "sum"
@@ -612,14 +557,11 @@
           "show": false
         },
         "showHeader": true,
-        "sortBy": [
-          {
-            "desc": true,
-            "displayName": "Severity"
-          }
-        ]
+        "sortBy": []
       },
       "pluginVersion": "9.1.6",
+      "repeat": "Site",
+      "repeatDirection": "v",
       "targets": [
         {
           "application": {
@@ -636,7 +578,7 @@
             "filter": "/^Aruba$/"
           },
           "host": {
-            "filter": "/.*/"
+            "filter": "$Site"
           },
           "item": {
             "filter": "Insights Discovery"
@@ -688,16 +630,23 @@
           "useCaptureGroups": false
         }
       ],
-      "title": "Insights",
+      "title": "Insights $Site",
       "transformations": [
+        {
+          "id": "extractFields",
+          "options": {
+            "format": "json",
+            "replace": true,
+            "source": "Insights Discovery"
+          }
+        },
         {
           "id": "reduce",
           "options": {
             "includeTimeField": false,
-            "labelsToFields": false,
             "mode": "seriesToRows",
             "reducers": [
-              "last"
+              "lastNotNull"
             ]
           }
         },
@@ -706,24 +655,26 @@
           "options": {
             "format": "json",
             "replace": true,
-            "source": "Last"
+            "source": "Last *"
           }
         },
         {
-          "id": "reduce",
+          "id": "organize",
           "options": {
-            "labelsToFields": false,
-            "reducers": [
-              "last"
-            ]
-          }
-        },
-        {
-          "id": "extractFields",
-          "options": {
-            "format": "kvp",
-            "replace": true,
-            "source": "Last"
+            "excludeByName": {
+              "client": true,
+              "insight_id": true,
+              "is_config_recommendation_insight": true
+            },
+            "indexByName": {},
+            "renameByName": {
+              "category": "Categoria",
+              "client": "Tenant",
+              "description": "Detalhes",
+              "impact": "Impacto",
+              "insight": "Insight",
+              "severity": "Severidade"
+            }
           }
         }
       ],
@@ -766,6 +717,36 @@
         "skipUrlSync": false,
         "sort": 0,
         "type": "query"
+      },
+      {
+        "current": {
+          "selected": false,
+          "text": "All",
+          "value": "$__all"
+        },
+        "datasource": {
+          "type": "alexanderzobnin-zabbix-datasource",
+          "uid": "tSvHjO4Vz"
+        },
+        "definition": "Zabbix - host",
+        "hide": 0,
+        "includeAll": true,
+        "multi": false,
+        "name": "Site",
+        "options": [],
+        "query": {
+          "application": "",
+          "group": "Main Tenant Aruba",
+          "host": "/^(?!Aruba).*/",
+          "item": "",
+          "itemTag": "",
+          "queryType": "host"
+        },
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 0,
+        "type": "query"
       }
     ]
   },
@@ -777,6 +758,6 @@
   "timezone": "",
   "title": "Dashboard de Overview do ARUBA",
   "uid": "tgfjhgk4isp9fkc",
-  "version": 7,
+  "version": 23,
   "weekStart": ""
 }
