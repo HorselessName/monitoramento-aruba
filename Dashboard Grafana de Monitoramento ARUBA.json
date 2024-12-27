@@ -498,7 +498,7 @@
             "properties": [
               {
                 "id": "custom.width",
-                "value": 634
+                "value": 417
               }
             ]
           },
@@ -522,7 +522,7 @@
             "properties": [
               {
                 "id": "custom.width",
-                "value": 606
+                "value": 498
               }
             ]
           },
@@ -534,7 +534,7 @@
             "properties": [
               {
                 "id": "custom.width",
-                "value": 751
+                "value": 407
               }
             ]
           }
@@ -681,7 +681,7 @@
       "type": "table"
     }
   ],
-  "refresh": "30s",
+  "refresh": "",
   "schemaVersion": 37,
   "style": "dark",
   "tags": [],
@@ -729,7 +729,7 @@
           "uid": "tSvHjO4Vz"
         },
         "definition": "Zabbix - host",
-        "hide": 0,
+        "hide": 2,
         "includeAll": true,
         "multi": false,
         "name": "Site",
@@ -758,6 +758,6 @@
   "timezone": "",
   "title": "Dashboard de Overview do ARUBA",
   "uid": "tgfjhgk4isp9fkc",
-  "version": 23,
+  "version": 25,
   "weekStart": ""
 }
