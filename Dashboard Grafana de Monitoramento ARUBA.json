@@ -1,53 +1,4 @@
 {
-  "__inputs": [
-    {
-      "name": "DS_ZABBIX",
-      "label": "Zabbix",
-      "description": "",
-      "type": "datasource",
-      "pluginId": "alexanderzobnin-zabbix-datasource",
-      "pluginName": "Zabbix"
-    }
-  ],
-  "__elements": {},
-  "__requires": [
-    {
-      "type": "datasource",
-      "id": "alexanderzobnin-zabbix-datasource",
-      "name": "Zabbix",
-      "version": "1.0.0"
-    },
-    {
-      "type": "panel",
-      "id": "alexanderzobnin-zabbix-triggers-panel",
-      "name": "Zabbix Problems",
-      "version": ""
-    },
-    {
-      "type": "grafana",
-      "id": "grafana",
-      "name": "Grafana",
-      "version": "9.1.6"
-    },
-    {
-      "type": "panel",
-      "id": "stat",
-      "name": "Stat",
-      "version": ""
-    },
-    {
-      "type": "panel",
-      "id": "table",
-      "name": "Table",
-      "version": ""
-    },
-    {
-      "type": "panel",
-      "id": "text",
-      "name": "Text",
-      "version": ""
-    }
-  ],
   "annotations": {
     "list": [
       {
@@ -73,7 +24,7 @@
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
-  "id": null,
+  "id": 121,
   "links": [],
   "liveNow": false,
   "panels": [
@@ -105,7 +56,7 @@
     {
       "datasource": {
         "type": "alexanderzobnin-zabbix-datasource",
-        "uid": "${DS_ZABBIX}"
+        "uid": "tSvHjO4Vz"
       },
       "fieldConfig": {
         "defaults": {
@@ -167,7 +118,7 @@
           "countTriggersBy": "",
           "datasource": {
             "type": "alexanderzobnin-zabbix-datasource",
-            "uid": "${DS_ZABBIX}"
+            "uid": "tSvHjO4Vz"
           },
           "evaltype": "0",
           "functions": [],
@@ -243,7 +194,7 @@
       "customLastChangeFormat": false,
       "datasource": {
         "type": "alexanderzobnin-zabbix-datasource",
-        "uid": "${DS_ZABBIX}"
+        "uid": "tSvHjO4Vz"
       },
       "description": "",
       "descriptionAtNewLine": false,
@@ -382,7 +333,7 @@
           },
           "datasource": {
             "type": "alexanderzobnin-zabbix-datasource",
-            "uid": "${DS_ZABBIX}"
+            "uid": "tSvHjO4Vz"
           },
           "functions": [],
           "group": {
@@ -482,7 +433,7 @@
     {
       "datasource": {
         "type": "alexanderzobnin-zabbix-datasource",
-        "uid": "${DS_ZABBIX}"
+        "uid": "tSvHjO4Vz"
       },
       "description": "",
       "fieldConfig": {
@@ -677,7 +628,7 @@
           "countTriggersBy": "",
           "datasource": {
             "type": "alexanderzobnin-zabbix-datasource",
-            "uid": "${DS_ZABBIX}"
+            "uid": "tSvHjO4Vz"
           },
           "evaltype": "0",
           "functions": [],
@@ -729,19 +680,16 @@
           "trigger": {
             "filter": ""
           },
+          "triggers": {
+            "acknowledged": 2,
+            "count": true,
+            "minSeverity": 3
+          },
           "useCaptureGroups": false
         }
       ],
       "title": "Insights",
       "transformations": [
-        {
-          "id": "extractFields",
-          "options": {
-            "format": "json",
-            "jsonPaths": [],
-            "source": "Insights Discovery"
-          }
-        },
         {
           "id": "reduce",
           "options": {
@@ -749,7 +697,24 @@
             "labelsToFields": false,
             "mode": "seriesToRows",
             "reducers": [
-              "lastNotNull"
+              "last"
+            ]
+          }
+        },
+        {
+          "id": "extractFields",
+          "options": {
+            "format": "json",
+            "replace": true,
+            "source": "Last"
+          }
+        },
+        {
+          "id": "reduce",
+          "options": {
+            "labelsToFields": false,
+            "reducers": [
+              "last"
             ]
           }
         },
@@ -757,45 +722,8 @@
           "id": "extractFields",
           "options": {
             "format": "kvp",
-            "source": "Last *"
-          }
-        },
-        {
-          "id": "organize",
-          "options": {
-            "excludeByName": {
-              "Last *": true,
-              "[": true,
-              "]": true,
-              "description": true,
-              "insight": false,
-              "insight_id": true,
-              "is_config_recommendation_insight": true
-            },
-            "includeByName": {},
-            "indexByName": {
-              "Field": 0,
-              "Last *": 2,
-              "[": 3,
-              "]": 11,
-              "category": 4,
-              "cliente": 1,
-              "description": 5,
-              "impact": 6,
-              "insight": 7,
-              "insight_id": 8,
-              "is_config_recommendation_insight": 9,
-              "severity": 10
-            },
-            "renameByName": {
-              "category": "Category",
-              "cliente": "Cliente",
-              "description": "Description",
-              "impact": "Impact",
-              "insight": "Insight",
-              "insight_id": "Insight ID",
-              "severity": "Severity"
-            }
+            "replace": true,
+            "source": "Last"
           }
         }
       ],
@@ -809,10 +737,14 @@
   "templating": {
     "list": [
       {
-        "current": {},
+        "current": {
+          "selected": false,
+          "text": "All",
+          "value": "$__all"
+        },
         "datasource": {
           "type": "alexanderzobnin-zabbix-datasource",
-          "uid": "${DS_ZABBIX}"
+          "uid": "tSvHjO4Vz"
         },
         "definition": "Zabbix - group",
         "description": "Uses a RegEx to remove \"Aruba\" and the parenthesis, leaving only the name of the Tenant Client.",
@@ -845,6 +777,6 @@
   "timezone": "",
   "title": "Dashboard de Overview do ARUBA",
   "uid": "tgfjhgk4isp9fkc",
-  "version": 6,
+  "version": 7,
   "weekStart": ""
 }

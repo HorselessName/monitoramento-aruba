@@ -174,9 +174,9 @@ class Site:
 
 class Insight:
     SEVERITY_ORDER = {
-        'low': 1,
+        'high': 1,
         'med': 2,
-        'high': 3
+        'low': 3
     }
 
     def __init__(self, category, description, impact, insight, insight_id, is_config_recommendation_insight, severity,
@@ -204,7 +204,8 @@ class Insight:
         )
 
     def __lt__(self, other):
-        return self.SEVERITY_ORDER[self.severity] < self.SEVERITY_ORDER[other.severity]
+        # Comparação direta usando a ordem da severidade
+        return self.SEVERITY_ORDER.get(self.severity, float('inf')) < self.SEVERITY_ORDER.get(other.severity, float('inf'))
 
 
 def refresh_token(client_name, config_parser):
@@ -420,14 +421,15 @@ def list_insights(client_name, config_parser):
             try:
                 validated_insight = Insight.from_dict(insight, client_name).__dict__
                 validated_insights.append(validated_insight)
-            except (KeyError, TypeError, ValueError) as e:
+            except (KeyError, TypeError, ValueError):
                 # Ignorar insights malformados
                 pass
 
-    def severity_sort_key(insight_severity):
+    def severity_sort_key(insight):
         # Retorna a ordem da severidade ou um número alto para desconhecidos
-        return Insight.SEVERITY_ORDER.get(insight_severity['severity'], float('inf'))
+        return Insight.SEVERITY_ORDER.get(insight['severity'], float('inf'))
 
+    # Ordena os insights por severidade
     validated_insights.sort(key=severity_sort_key)
 
     return json.dumps({"data": validated_insights}, indent=4, ensure_ascii=False)
