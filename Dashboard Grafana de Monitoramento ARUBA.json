@@ -681,7 +681,7 @@
       "type": "table"
     }
   ],
-  "refresh": "",
+  "refresh": "30s",
   "schemaVersion": 37,
   "style": "dark",
   "tags": [],
@@ -758,6 +758,6 @@
   "timezone": "",
   "title": "Dashboard de Overview do ARUBA",
   "uid": "tgfjhgk4isp9fkc",
-  "version": 25,
+  "version": 27,
   "weekStart": ""
 }
