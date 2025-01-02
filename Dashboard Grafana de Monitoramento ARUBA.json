@@ -679,7 +679,7 @@
           "options": {
             "labelsToFields": false,
             "reducers": [
-              "lastNotNull"
+              "last"
             ]
           }
         },
@@ -688,25 +688,34 @@
           "options": {
             "format": "json",
             "replace": true,
-            "source": "Last *"
+            "source": "Last"
+          }
+        },
+        {
+          "id": "extractFields",
+          "options": {
+            "format": "json",
+            "replace": true,
+            "source": "data"
           }
         },
         {
           "id": "reduce",
           "options": {
             "includeTimeField": false,
+            "labelsToFields": false,
             "mode": "seriesToRows",
             "reducers": [
-              "lastNotNull"
+              "last"
             ]
           }
         },
         {
           "id": "extractFields",
           "options": {
-            "format": "json",
+            "format": "kvp",
             "replace": true,
-            "source": "Last *"
+            "source": "Last"
           }
         },
         {
@@ -715,24 +724,24 @@
             "excludeByName": {
               "client": true,
               "insight_id": true,
-              "is_config_recommendation_insight": false
+              "severity": false
             },
             "indexByName": {
-              "category": 3,
-              "client": 2,
-              "description": 6,
-              "impact": 4,
-              "insight": 1,
+              "category": 1,
+              "client": 7,
+              "description": 2,
+              "impact": 3,
+              "insight": 4,
               "insight_id": 5,
-              "is_config_recommendation_insight": 7,
+              "is_config_recommendation_insight": 6,
               "severity": 0
             },
             "renameByName": {
               "category": "Categoria",
-              "client": "Tenant",
               "description": "Detalhes",
               "impact": "Impacto",
               "insight": "Insight",
+              "insight_id": "",
               "is_config_recommendation_insight": "Recomendação",
               "severity": "Severidade"
             }
@@ -819,6 +828,6 @@
   "timezone": "",
   "title": "Dashboard de Overview do ARUBA",
   "uid": "tgfjhgk4isp9fkc",
-  "version": 37,
+  "version": 38,
   "weekStart": ""
 }
